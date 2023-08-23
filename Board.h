@@ -14,13 +14,16 @@ private:
     std::vector<std::vector<int>> numbers_on_the_board;
     std::vector<std::vector<int>> gen_horizontal_lines();
     std::vector<std::vector<int>> gen_vertical_lines();
-    int get_box_index(int i, int j);
+    static int get_box_index(int i, int j);
 
 public:
     explicit Board(std::vector<std::vector<int>>& numbers);
     Board();
 
     void fill_square_vector(std::vector<Square>& squares);
+    static void eliminate_impossible_nums(const std::vector<int>& horizontal_lines, const std::vector<int>& vertical_lines,
+                                                      const std::vector<int>& boxes, std::vector<int>& possible_nums);
+    void simplify(std::vector<Square> squares);
 
     void draw();
     void solve();

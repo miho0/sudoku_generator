@@ -5,7 +5,6 @@
 
 
 int main() {
-
     Board board = Board();
     board.solve();
     board.draw();
