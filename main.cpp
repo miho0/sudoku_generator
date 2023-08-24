@@ -6,7 +6,9 @@
 
 int main() {
     Board board = Board();
+    board.draw();
     board.solve();
+    std::cout<<"--------------\n";
     board.draw();
     return 0;
 }

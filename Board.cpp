@@ -3,26 +3,25 @@
 #include <algorithm>
 
 Board::Board(std::vector<std::vector<int>>& numbers) {
-    numbers_on_the_board = numbers;
+    horizontal_lines = numbers;
 }
 
 Board::Board() {
-    std::vector<int> square1 = {4, 3, 5, 6, 8, 2, 1, 9, 7};
-    std::vector<int> square2 = {2, 6, 9, 5, 7, 1, 8, 3, 4};
-    std::vector<int> square3 = {7, 8, 1, 4, 9, 3, 5, 6, 2};
-    std::vector<int> square4 = {8, 2, 6, 3, 7, 4, 9, 5, 1};
-    std::vector<int> square5 = {1, 9, 5, 6, 8, 2, 7, 4, 3};
-    std::vector<int> square6 = {3, 4, 7, 9, 1, 0, 6, 2, 8};
-    std::vector<int> square7 = {5, 1, 9, 2, 4, 8, 7, 6, 3};
-    std::vector<int> square8 = {3, 2, 6, 9, 5, 7, 4, 1, 8};
-    std::vector<int> square9 = {8, 7, 4, 1, 3, 6, 2, 5, 9};
-    numbers_on_the_board = std::vector<std::vector<int>>{square1, square2, square3, square4,
-                                                         square5, square6, square7, square8, square9};
+    std::vector<int> l1 = {1, 0, 0, 4, 0, 6, 7, 8, 0};
+    std::vector<int> l2 = {0, 0, 6, 0, 8, 0, 1, 0, 0};
+    std::vector<int> l3 = {7, 8, 0, 1, 2, 3, 0, 0, 0};
+    std::vector<int> l4 = {0, 3, 0, 5, 0, 0, 8, 0, 1};
+    std::vector<int> l5 = {0, 6, 0, 0, 9, 1, 2, 3, 0};
+    std::vector<int> l6 = {0, 0, 1, 0, 3, 0, 0, 0, 7};
+    std::vector<int> l7 = {3, 4, 0, 6, 7, 0, 9, 0, 0};
+    std::vector<int> l8 = {0, 7, 8, 0, 0, 2, 0, 4, 0};
+    std::vector<int> l9 = {0, 1, 2, 3, 0, 5, 6, 0, 8};
+    horizontal_lines = std::vector<std::vector<int>>{l1, l2, l3, l4, l5, l6, l7, l8, l9};
 }
 
 int Board::get_box_index(int x, int y) {
-    int horizontal_index = x % 3;
-    int vertical_index = y % 3;
+    int horizontal_index = x / 3;
+    int vertical_index = y / 3;
     int index = (horizontal_index + 10) * (vertical_index + 1);
     switch (index) {
         case 10: return 0;
@@ -38,17 +37,17 @@ int Board::get_box_index(int x, int y) {
     }
 }
 
-std::vector<std::vector<int>> Board::gen_horizontal_lines(){
+std::vector<std::vector<int>> Board::gen_boxes(){
     std::vector<std::vector<int>> result = {};
     for(int currLine = 0; currLine < 9; currLine++) {
         std::vector<int> currVec = {};
         int startVec = 0;
         if (currLine < 6 && currLine >= 3) startVec = 3;
-        if (currLine < 9 && currLine >= 6) startVec = 6;
+        if (currLine >= 6) startVec = 6;
         for(int i = startVec; i < startVec + 3; i++) {
             int startRange = currLine % 3;
             for(int j=0; j<3; j++) {
-                currVec.push_back(numbers_on_the_board[i][startRange * 3 + j]);
+                currVec.push_back(horizontal_lines[i][startRange * 3 + j]);
             }
         }
         result.push_back(currVec);
@@ -60,14 +59,9 @@ std::vector<std::vector<int>> Board::gen_vertical_lines() {
     std::vector<std::vector<int>> result = {};
     for(int currLine = 0; currLine < 9; currLine++) {
         std::vector<int> currVec = {};
-        int startVec = 0;
-        if (currLine < 6 && currLine >= 3) startVec = 1;
-        if (currLine < 9 && currLine >= 6) startVec = 2;
-        for(int i = startVec; i < startVec + 7; i+=3) {
-            int startRange = currLine % 3;
-            for(int j=0; j<3; j++) {
-                currVec.push_back(numbers_on_the_board[i][startRange + (3 * j)]);
-            }
+        currVec.reserve(9);
+        for(int j = 0; j < 9; j++) {
+            currVec.push_back(horizontal_lines[j][currLine]);
         }
         result.push_back(currVec);
     }
@@ -76,10 +70,9 @@ std::vector<std::vector<int>> Board::gen_vertical_lines() {
 
 
 void Board::draw() {
-    std::vector<std::vector<int>> lines = Board::gen_horizontal_lines();
     for(int i = 0; i < 9; i++) {
         for (int j = 0; j < 9; j++) {
-            std::cout << "| " << (lines[i][j] == 0 ? " " : std::to_string(lines[i][j])) << " ";
+            std::cout << "| " << (horizontal_lines[i][j] == 0 ? " " : std::to_string(horizontal_lines[i][j])) << " ";
             if (j == 8) {
                 std::cout << "|";
             }
@@ -89,7 +82,6 @@ void Board::draw() {
 }
 
 void Board::fill_square_vector(std::vector<Square>& squares) {
-    std::vector<std::vector<int>> horizontal_lines = gen_horizontal_lines();
     for(int i = 0; i < 9; i++) {
         for (int j = 0; j < 9; j++) {
             if (horizontal_lines[i][j] == 0) {
@@ -109,18 +101,25 @@ void Board::eliminate_impossible_nums(const std::vector<int>& horizontal_line, c
         all_nums.push_back(box[i]);
     }
 
+//    for(int i = 0; i < 9; i++) {
+//        std::cout<<horizontal_line[i]<<" ";
+//    }
+//    std::cout<<"\n";
+//    for(int i = 0; i < 9; i++) {
+//        std::cout<<vertical_line[i]<<" ";
+//    }
+//    std::cout<<"\n";
+//
+//    for(int i = 0; i < 9; i++) {
+//        std::cout<<box[i]<<" ";
+//    }
+//    std::cout<<"\n";
+
+
     for(int i = 0; i < 27; i++) {
         auto it = std::find(possible_nums.begin(), possible_nums.end(), all_nums[i]);
         if (it != possible_nums.end()) {
             possible_nums.erase(it);
-        }
-    }
-}
-
-void Board::simplify(std::vector<Square> squares) {
-    for(Square & s : squares) {
-        if (s.possible_nums.size() == 1) {
-            this->numbers_on_the_board[s.x][s.y] = s.possible_nums[0];
         }
     }
 }
@@ -130,21 +129,23 @@ void Board::solve() {
     std::vector<Square> squares = {};
     fill_square_vector(squares);
     while (should_continue) {
-        int init_count = squares.size();
-        std::vector<std::vector<int>> horizontal_lines = Board::gen_horizontal_lines();
+        should_continue = false;
         std::vector<std::vector<int>> vertical_lines = Board::gen_vertical_lines();
-        std::vector<std::vector<int>> boxes = numbers_on_the_board;
+        std::vector<std::vector<int>> boxes = gen_boxes();
 
-        for(int i = 0; i < init_count; i++) {
-            std::vector<int> horizontal_line = horizontal_lines[squares[i].x];
-            std::vector<int> vertical_line = vertical_lines[squares[i].y];
-            std::vector<int> box = boxes[get_box_index(squares[i].x, squares[i].y)];
-            eliminate_impossible_nums(horizontal_line, vertical_line, box, squares[i].possible_nums);
+        for(auto & square : squares) {
+            std::vector<int> horizontal_line = horizontal_lines[square.x];
+            std::vector<int> vertical_line = vertical_lines[square.y];
+            std::vector<int> box = boxes[get_box_index(square.x, square.y)];
+            eliminate_impossible_nums(horizontal_line, vertical_line, box, square.possible_nums);
         }
 
-        simplify(squares);
-
-        should_continue = init_count != squares.size();
+        for(Square & s : squares) {
+            if (s.possible_nums.size() == 1) {
+                this->horizontal_lines[s.x][s.y] = s.possible_nums[0];
+                should_continue = true;
+            }
+        }
     }
 }
 
