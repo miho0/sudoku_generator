@@ -7,15 +7,15 @@ Board::Board(std::vector<std::vector<int>> &numbers) {
 }
 
 Board::Board() {
-    std::vector<int> l1 = {1, 0, 0, 4, 0, 6, 7, 8, 9};
-    std::vector<int> l2 = {0, 0, 6, 0, 8, 0, 1, 0, 0};
-    std::vector<int> l3 = {7, 8, 0, 0, 2, 3, 0, 0, 0};
-    std::vector<int> l4 = {0, 0, 0, 5, 0, 0, 8, 0, 1};
-    std::vector<int> l5 = {0, 0, 7, 0, 9, 1, 2, 3, 0};
-    std::vector<int> l6 = {0, 0, 1, 0, 3, 0, 0, 0, 7};
-    std::vector<int> l7 = {3, 4, 0, 6, 0, 0, 0, 0, 0};
-    std::vector<int> l8 = {0, 7, 8, 0, 0, 2, 0, 0, 0};
-    std::vector<int> l9 = {0, 1, 2, 3, 0, 5, 6, 0, 8};
+    std::vector<int> l1 = {6, 0, 0, 0, 5, 0, 1, 0, 0};
+    std::vector<int> l2 = {0, 3, 0, 0, 9, 0, 0, 4, 0};
+    std::vector<int> l3 = {0, 0, 0, 0, 0, 0, 0, 0, 0};
+    std::vector<int> l4 = {0, 5, 0, 0, 3, 0, 6, 0, 0};
+    std::vector<int> l5 = {0, 8, 0, 0, 0, 0, 2, 0, 0};
+    std::vector<int> l6 = {0, 4, 0, 5, 8, 0, 0, 0, 1};
+    std::vector<int> l7 = {3, 0, 0, 0, 0, 9, 0, 0, 2};
+    std::vector<int> l8 = {7, 0, 0, 0, 1, 0, 9, 0, 0};
+    std::vector<int> l9 = {0, 0, 0, 2, 0, 8, 0, 0, 0};
     horizontal_lines = std::vector<std::vector<int>>{l1, l2, l3, l4, l5, l6, l7, l8, l9};
     missing_numbers = std::vector<Square>{};
 }
@@ -157,22 +157,27 @@ void Board::fill_solutions_initial() {
 // check all previous values to see if any of them have the same line or box and if we put that number in there already
 
 bool Board::backtrack(int index = 0) {
-    std::cout<<index<<"\n";
     if (index >= missing_numbers.size()) {
         return true;
     }
     for(int number: missing_numbers[index].possible_nums) {
+        bool solution_works = true;
         for(int i = 0; i <= index; i++) {
             if (solutions[index] == solutions[i] && number == solutions[i].get_num()) {
+                solution_works = false;
                 break;
             }
+        }
+        if (solution_works) {
             solutions[index].set_num(number);
             if (backtrack(index + 1)) {
                 return true;
+            } else {
+                solutions[index].set_num(0);
             }
-            solutions[index].set_num(0);
         }
     }
+    return false;
 }
 
 void Board::fill_solutions() {

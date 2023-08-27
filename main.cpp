@@ -10,10 +10,5 @@ int main() {
     board.solve();
     std::cout<<"--------------\n";
     board.draw();
-
-    Solution s1 = Solution(7, 4, 7, 0);
-    Solution s2 = Solution(6, 4, 7, 0);
-    std::cout<<(s1 == s2)<<"\n";
-
     return 0;
 }
