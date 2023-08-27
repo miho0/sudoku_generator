@@ -7,6 +7,4 @@ add_executable(sudoku_generator
         main.cpp
         Board.cpp Board.h
         Square.h
-        SudokuEntity.cpp
-        SudokuEntity.h
-)
+        )

@@ -9,15 +9,15 @@ Board::Board(std::vector<std::vector<int>> &numbers) {
 Board::Board() {
     std::vector<int> l1 = {1, 0, 0, 4, 0, 6, 7, 8, 9};
     std::vector<int> l2 = {0, 0, 6, 0, 8, 0, 1, 0, 0};
-    std::vector<int> l3 = {7, 0, 0, 0, 2, 3, 0, 0, 0};
+    std::vector<int> l3 = {7, 8, 0, 0, 2, 3, 0, 0, 0};
     std::vector<int> l4 = {0, 0, 0, 5, 0, 0, 8, 0, 1};
-    std::vector<int> l5 = {0, 0, 0, 0, 9, 1, 2, 3, 0};
+    std::vector<int> l5 = {0, 0, 7, 0, 9, 1, 2, 3, 0};
     std::vector<int> l6 = {0, 0, 1, 0, 3, 0, 0, 0, 7};
     std::vector<int> l7 = {3, 4, 0, 6, 0, 0, 0, 0, 0};
     std::vector<int> l8 = {0, 7, 8, 0, 0, 2, 0, 0, 0};
     std::vector<int> l9 = {0, 1, 2, 3, 0, 5, 6, 0, 8};
     horizontal_lines = std::vector<std::vector<int>>{l1, l2, l3, l4, l5, l6, l7, l8, l9};
-    squares = std::vector<Square>{};
+    missing_numbers = std::vector<Square>{};
 }
 
 int Board::get_box_index(int x, int y) {
@@ -92,11 +92,11 @@ void Board::draw() {
     }
 }
 
-void Board::fill_square_vector() {
+void Board::fill_missing_nums() {
     for (int i = 0; i < 9; i++) {
         for (int j = 0; j < 9; j++) {
             if (horizontal_lines[i][j] == 0) {
-                squares.emplace_back(i, j);
+                missing_numbers.emplace_back(i, j);
             }
         }
     }
@@ -120,106 +120,79 @@ void Board::eliminate_impossible_nums(const std::vector<int> &horizontal_line, c
     }
 }
 
-void Board::find_square(int x, int y, std::vector<Square> &entity_squares) {
-    for (auto &square: squares) {
-        if (square.x == x && square.y == y) {
-            entity_squares.push_back(square);
-        }
-    }
-}
+void Board::initial_solutions() {
+    bool should_continue = true;
+    while(should_continue) {
+        should_continue = false;
+        std::vector<std::vector<int>> vertical_lines = Board::gen_vertical_lines();
+        std::vector<std::vector<int>> boxes = gen_boxes();
 
-void Board::fill_solvable_squares(const std::vector<SolutionForSquare> &solutions) {
-    for (auto &square: squares) {
-        for (auto solution: solutions) {
-            if (square.x == solution.x && square.y == solution.y) {
-                horizontal_lines[square.x][square.y] = solution.num;
-                auto it = std::find(squares.begin(), squares.end(), square);
-                squares.erase(it);
+        for (auto &square: missing_numbers) {
+            std::vector<int> horizontal_line = horizontal_lines[square.x];
+            std::vector<int> vertical_line = vertical_lines[square.y];
+            std::vector<int> box = boxes[get_box_index(square.x, square.y)];
+            eliminate_impossible_nums(horizontal_line, vertical_line, box, square.possible_nums);
+        }
+
+        for (int i = 0; i < missing_numbers.size(); i++) {
+            Square &s = missing_numbers[i];
+            if (s.possible_nums.size() == 1) {
+                this->horizontal_lines[s.x][s.y] = s.possible_nums[0];
+                missing_numbers.erase(missing_numbers.begin() + i);
+                should_continue = true;
             }
         }
     }
 }
 
-bool Board::only_possible_number_approach() {
-    bool should_continue = false;
-    std::vector<std::vector<int>> vertical_lines = Board::gen_vertical_lines();
-    std::vector<std::vector<int>> boxes = gen_boxes();
-
-    for (auto &square: squares) {
-        std::vector<int> horizontal_line = horizontal_lines[square.x];
-        std::vector<int> vertical_line = vertical_lines[square.y];
-        std::vector<int> box = boxes[get_box_index(square.x, square.y)];
-        eliminate_impossible_nums(horizontal_line, vertical_line, box, square.possible_nums);
+void Board::fill_solutions_initial() {
+    for(auto & missing_number : missing_numbers) {
+        int x = missing_number.x;
+        int y = missing_number.y;
+        solutions.emplace_back(x, y, get_box_index(x, y), 0);
     }
-
-    for (int i = 0; i < squares.size(); i++) {
-        Square &s = squares[i];
-        if (s.possible_nums.size() == 1) {
-            this->horizontal_lines[s.x][s.y] = s.possible_nums[0];
-            squares.erase(squares.begin() + i);
-            should_continue = true;
-        }
-    }
-    return should_continue;
 }
 
-bool Board::missing_number_approach() {
-    // for each box, horizontal and vertical line, construct a SudokuEntity instance
-    // use the solve function to get the solutions
-    // update the numbers
-    bool should_continue = false;
-    for (int i = 0; i < horizontal_lines.size(); i++) {
-        SudokuEntity entity = SudokuEntity();
-        for (int j = 0; j < 9; j++) {
-            if (horizontal_lines[i][j] == 0) {
-                find_square(i, j, entity.squares);
-            } else {
-                auto it = std::find(entity.missing_numbers.begin(), entity.missing_numbers.end(),
-                                    horizontal_lines[i][j]);
-                if (it != entity.missing_numbers.end()) {
-                    entity.missing_numbers.erase(it);
-                }
+// in the solution structure, we have the index of the horizontal, vertical lines and box
+// check all previous values to see if any of them have the same line or box and if we put that number in there already
+
+bool Board::backtrack(int index = 0) {
+    std::cout<<index<<"\n";
+    if (index >= missing_numbers.size()) {
+        return true;
+    }
+    for(int number: missing_numbers[index].possible_nums) {
+        for(int i = 0; i <= index; i++) {
+            if (solutions[index] == solutions[i] && number == solutions[i].get_num()) {
+                break;
             }
-        }
-        std::vector<SolutionForSquare> solutions_generated = entity.solve_for_solvable_squares();
-        if (!solutions_generated.empty()) {
-            should_continue = true;
-            fill_solvable_squares(solutions_generated);
+            solutions[index].set_num(number);
+            if (backtrack(index + 1)) {
+                return true;
+            }
+            solutions[index].set_num(0);
         }
     }
-return should_continue;
+}
+
+void Board::fill_solutions() {
+    for(int i = 0; i < solutions.size(); i++) {
+        int x = missing_numbers[i].x;
+        int y = missing_numbers[i].y;
+        horizontal_lines[x][y] = solutions[i].get_num();
+    }
 }
 
 void Board::solve() {
-    // TODO maybe move the loop and the calls to the simplify function here. Figure out the optimal approach
-    // current idea:
-    // 1) do the only possible number approach until it doesn't do anything anymore
-    // 2) do the missing numbers approach one
-    // repeat the process; once it doesn't do anything anymore, can we declare the sudoku as having multiple solutions?
-    bool should_continue = true;
-    fill_square_vector();
-    while (should_continue) {
-        bool should_continue_first_approach = true;
-        while (should_continue_first_approach) {
-            should_continue_first_approach = only_possible_number_approach();
-        }
-        should_continue = missing_number_approach();
-    }
+    fill_missing_nums(); // we fill our missing nums vector with appropriate values
+    initial_solutions(); // we generate the initial solutions and eliminate numbers that it cannot be
+    fill_solutions_initial(); // we fill the solutions vector with the initial values
+    bool solved = backtrack();
+    std::cout<<(solved ? "Sudoku solved!" : "Unable to find a solution");
+    fill_solutions();
 }
 
-// 1) fill up the squares vector with all squares that have the value 0 - x is x, y is y, the vector is empty
-// 2) Loop begins and ends when nothing changes
-// 3) Figure out numbers it cannot be by looking at every line and the box for every square and put it all in the vector
-// 4) Loop through every box, and line. Figure out if there is a number in there that can only be present in one of them
-// 5) Update the main vector
-
-// a struct that keeps track of everything
-
-// horizontal lines:
-
-// loop through every line
-// get the missing numbers
-//
-
-// TODO idea: keep track of the lines that are already solved; don't solve them again :)
-// TODO idea: keep track of the SudokuEntities so you can pick upp where you left off
+// 1) solve for the solvable missing_numbers and remove numbers that it cannot be from the missing_numbers structure
+// 2) backtracking algorithm - try a number out of possible_nums - have another vector that stores all values that we have decided to be inside
+// 3) remove that number from possible_nums from all missing_numbers that are related to that square, remember what we have removed in order for this to work
+// 4) how do we know the solution doesn't work? If there are no possible_nums in there
