@@ -5,6 +5,7 @@
 #include <vector>
 #include "Square.h"
 #include "Solution.h"
+#include "SudokuUtil.h"
 
 #ifndef SUDOKU_GENERATOR_BOARD_H
 #define SUDOKU_GENERATOR_BOARD_H
@@ -17,9 +18,7 @@ private:
     std::vector<Solution> solutions;
     std::vector<std::vector<int>> gen_boxes();
     std::vector<std::vector<int>> gen_vertical_lines();
-    static void eliminate_impossible_nums(const std::vector<int>& horizontal_lines, const std::vector<int>& vertical_lines,
-                                          const std::vector<int>& boxes, std::vector<int>& possible_nums);
-    static int get_box_index(int i, int j);
+
     void initial_solutions();
     void fill_missing_nums();
     void fill_solutions_initial();
@@ -28,10 +27,10 @@ private:
 
 public:
     explicit Board(std::vector<std::vector<int>>& numbers);
-    Board();
 
     void draw();
     void solve();
+    void output();
 };
 
 

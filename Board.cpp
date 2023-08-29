@@ -1,51 +1,9 @@
 #include "Board.h"
 #include <iostream>
-#include <algorithm>
 
 Board::Board(std::vector<std::vector<int>> &numbers) {
     horizontal_lines = numbers;
-}
-
-Board::Board() {
-    std::vector<int> l1 = {6, 0, 0, 0, 5, 0, 1, 0, 0};
-    std::vector<int> l2 = {0, 3, 0, 0, 9, 0, 0, 4, 0};
-    std::vector<int> l3 = {0, 0, 0, 0, 0, 0, 0, 0, 0};
-    std::vector<int> l4 = {0, 5, 0, 0, 3, 0, 6, 0, 0};
-    std::vector<int> l5 = {0, 8, 0, 0, 0, 0, 2, 0, 0};
-    std::vector<int> l6 = {0, 4, 0, 5, 8, 0, 0, 0, 1};
-    std::vector<int> l7 = {3, 0, 0, 0, 0, 9, 0, 0, 2};
-    std::vector<int> l8 = {7, 0, 0, 0, 1, 0, 9, 0, 0};
-    std::vector<int> l9 = {0, 0, 0, 2, 0, 8, 0, 0, 0};
-    horizontal_lines = std::vector<std::vector<int>>{l1, l2, l3, l4, l5, l6, l7, l8, l9};
     missing_numbers = std::vector<Square>{};
-}
-
-int Board::get_box_index(int x, int y) {
-    int horizontal_index = x / 3;
-    int vertical_index = y / 3;
-    int index = (horizontal_index + 10) * (vertical_index + 1);
-    switch (index) {
-        case 10:
-            return 0;
-        case 20:
-            return 1;
-        case 30:
-            return 2;
-        case 11:
-            return 3;
-        case 22:
-            return 4;
-        case 33:
-            return 5;
-        case 12:
-            return 6;
-        case 24:
-            return 7;
-        case 36:
-            return 8;
-        default:
-            return -1;
-    }
 }
 
 std::vector<std::vector<int>> Board::gen_boxes() {
@@ -92,30 +50,20 @@ void Board::draw() {
     }
 }
 
+void Board::output() {
+    for(int i = 0; i < 9; i++) {
+        for (int j = 0; j < 9; j++) {
+            std::cout<<horizontal_lines[i][j];
+        }
+    }
+}
+
 void Board::fill_missing_nums() {
     for (int i = 0; i < 9; i++) {
         for (int j = 0; j < 9; j++) {
             if (horizontal_lines[i][j] == 0) {
                 missing_numbers.emplace_back(i, j);
             }
-        }
-    }
-}
-
-void Board::eliminate_impossible_nums(const std::vector<int> &horizontal_line, const std::vector<int> &vertical_line,
-                                      const std::vector<int> &box, std::vector<int> &possible_nums) {
-    std::vector<int> all_nums = {};
-
-    for (int i = 0; i < 9; i++) {
-        all_nums.push_back(horizontal_line[i]);
-        all_nums.push_back(vertical_line[i]);
-        all_nums.push_back(box[i]);
-    }
-
-    for (int i = 0; i < 27; i++) {
-        auto it = std::find(possible_nums.begin(), possible_nums.end(), all_nums[i]);
-        if (it != possible_nums.end()) {
-            possible_nums.erase(it);
         }
     }
 }
@@ -130,8 +78,8 @@ void Board::initial_solutions() {
         for (auto &square: missing_numbers) {
             std::vector<int> horizontal_line = horizontal_lines[square.x];
             std::vector<int> vertical_line = vertical_lines[square.y];
-            std::vector<int> box = boxes[get_box_index(square.x, square.y)];
-            eliminate_impossible_nums(horizontal_line, vertical_line, box, square.possible_nums);
+            std::vector<int> box = boxes[SudokuUtil::get_box_index(square.x, square.y)];
+            SudokuUtil::eliminate_impossible_nums(horizontal_line, vertical_line, box, square.possible_nums);
         }
 
         for (int i = 0; i < missing_numbers.size(); i++) {
@@ -149,7 +97,7 @@ void Board::fill_solutions_initial() {
     for(auto & missing_number : missing_numbers) {
         int x = missing_number.x;
         int y = missing_number.y;
-        solutions.emplace_back(x, y, get_box_index(x, y), 0);
+        solutions.emplace_back(x, y, SudokuUtil::get_box_index(x, y), 0);
     }
 }
 
@@ -193,7 +141,7 @@ void Board::solve() {
     initial_solutions(); // we generate the initial solutions and eliminate numbers that it cannot be
     fill_solutions_initial(); // we fill the solutions vector with the initial values
     bool solved = backtrack();
-    std::cout<<(solved ? "Sudoku solved!" : "Unable to find a solution");
+    // std::cout<<(solved ? "Sudoku solved!" : "Unable to find a solution");
     fill_solutions();
 }
 
